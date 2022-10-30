@@ -1,4 +1,3 @@
-#pragma once
 #include <sstream>
 #include <math.h>
 #include <ctime>
@@ -216,19 +215,6 @@ void GameOver::PrintGameOver(){
 	SDL_Rect dst = {(surface -> w - EndText -> w) / 2, (surface -> h - EndText -> h) / 2, 0, 0};
 	SDL_BlitSurface(EndText, NULL, surface, &dst);
 	SDL_UpdateWindowSurface(window);
-	SDL_Event e;
-	bool quit = false;
-	while (!quit){
-		while (SDL_PollEvent(&e) != 0)
-			if (e.type == SDL_QUIT) quit = true;
-		SDL_Delay(true);
-	}
-	SDL_FreeSurface(surface);
-	SDL_FreeSurface(EndText);
-	TTF_CloseFont(TextFont);
-	TTF_Quit();
-	SDL_DestroyWindow(window); 
-	SDL_Quit();
 }
 
 class Ball{
@@ -283,13 +269,13 @@ void Ball::Die(){
 }
 
 void Ball::CheckBorderCollision(Sound& Sound){	
- 	if ((int)y > WindowHeight - BallRadius - abs(VelY)){ 
+ 	if (y > WindowHeight - BallRadius - abs(VelY)){ 
  		Ball::Die();
  		y -= abs(VelY);
 	   	VelY *= - 1;
 		Sound.Wall();
  	}
- 	if((int)y < BallRadius + abs(VelY)){
+ 	if(y < BallRadius + abs(VelY)){
  		Ball::Die();
  		y += abs(VelY);
 	   	VelY *= - 1;
@@ -356,17 +342,13 @@ int main(int argc, char* argv[]){
 	RightScore RightScore;
 	Ball Ball;
 	GameOver GameOver;
+	bool IsOver = false;
 	
 	SDL_Event e;	
 	bool quit = false;
 	while (!quit){
 		while (SDL_PollEvent(&e) != 0)
 			if (e.type == SDL_QUIT) quit = true;
-	
-		LeftPaddle.Draw();
-		RightPaddle.Draw();
-		LeftScore.PrintScore();
-		RightScore.PrintScore();
 				
 		const Uint8 *state = SDL_GetKeyboardState(NULL);
 		if(state[SDL_SCANCODE_LSHIFT])
@@ -378,33 +360,46 @@ int main(int argc, char* argv[]){
 		if(state[SDL_SCANCODE_DOWN])
 			RightPaddle.MoveDown();
 		
-		Ball.CheckBorderCollision(Sound);
- 		Ball.CheckLeftPaddleCollision(LeftPaddle, Sound);	
-		Ball.CheckRightPaddleCollision(RightPaddle, Sound);
-				
-		Ball.Move();
-				
-		if(Ball.RightWin(LeftPaddle, Sound)){
-			RightScore.ScoreUp();
-			Ball.Die();
-			Ball.Spawn();
-		}
-
-		if(Ball.LeftWin(RightPaddle, Sound)){
-			LeftScore.ScoreUp();
-			Ball.Die();
-			Ball.Spawn();			
-		}
-
-		if(GameOver.CheckGameOver(LeftScore, RightScore)){
-			Ball.Die();
-			GameOver.PrintGameOver();
+		if(!IsOver){
+			if(GameOver.CheckGameOver(LeftScore, RightScore)){
+				Ball.Die();
+				GameOver.PrintGameOver();
+				IsOver = true;
+			}
 		}
 		
-		SDL_UpdateWindowSurface(window);
-								
+		if(!IsOver){
+			LeftPaddle.Draw();
+			RightPaddle.Draw();
+			LeftScore.PrintScore();
+			RightScore.PrintScore();
+			
+			Ball.CheckBorderCollision(Sound);
+	 		Ball.CheckLeftPaddleCollision(LeftPaddle, Sound);	
+			Ball.CheckRightPaddleCollision(RightPaddle, Sound);
+					
+			Ball.Move();
+					
+			if(Ball.RightWin(LeftPaddle, Sound)){
+				RightScore.ScoreUp();
+				Ball.Die();
+				Ball.Spawn();
+			}
+	
+			if(Ball.LeftWin(RightPaddle, Sound)){
+				LeftScore.ScoreUp();
+				Ball.Die();
+				Ball.Spawn();			
+			}
+	
+			SDL_UpdateWindowSurface(window);
+		}						
 	}
-	
+	SDL_FreeSurface(surface);
+	SDL_FreeSurface(EndText);
+	TTF_CloseFont(TextFont);
+	TTF_Quit();
+	SDL_DestroyWindow(window); 
+	SDL_Quit();
 	return 0;	
-	
 }
