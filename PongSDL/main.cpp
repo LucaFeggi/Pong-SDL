@@ -188,7 +188,7 @@ int RightScore::ReturnScore(){
 	return score;
 }
 
-class GameOver: public LeftScore, public RightScore{
+class GameOver{
 	public:
 		bool CheckGameOver(LeftScore&, RightScore&);
 		void PrintGameOver();		
